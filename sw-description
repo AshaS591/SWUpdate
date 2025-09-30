@@ -1,0 +1,9 @@
+software =
+{
+   version = "1.0";                   # Version of your update
+   compatible = "raspberrypi";        # Device/board compatibility
+   files : ((                           # List of files to copy
+      filename = "hello.py";           # File in rootfs folder
+      destination = "/usr/local/bin/hello.py"; # Where it will be installed
+   ));
+}
