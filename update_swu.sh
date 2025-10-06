@@ -1,17 +1,30 @@
 #!/bin/bash
+set -e
 
-WATCH_DIR="$HOME/hello_swu"
-SRC_FILE="$WATCH_DIR/hello.py"
-ROOTFS="$WATCH_DIR/rootfs/usr/local/bin"
-SWU_FILE="$WATCH_DIR/hello_signed.swu"
-SWDESC="$WATCH_DIR/sw-description"
-PRIV_KEY="$WATCH_DIR/priv.pem"
+SWU_NAME=hello_update.swu
+ROOTFS_DIR=rootfs
 
-# Copy to rootfs
-cp "$SRC_FILE" "$ROOTFS/hello.py"
+echo "Building signed SWU package: $SWU_NAME"
 
-# Create signed SWU
-mkswu -d "$WATCH_DIR/rootfs" -o "$SWU_FILE" -s "$SWDESC" -k "$PRIV_KEY"
+# Create archive of updated files
+tar -C $ROOTFS_DIR -czf update-rootfs.tar.gz .
 
-# Flash to live system
-sudo swupdate -i "$SWU_FILE" -k "$WATCH_DIR/pub.pem" -v
+# Create sw-description file
+cat > sw-description <<EOF
+software =
+{
+    version = "2.0";
+    images: (
+        {
+            filename = "update-rootfs.tar.gz";
+            path = "/usr/local/bin";
+            type = "archive";
+        }
+    );
+}
+EOF
+
+# Sign the package
+swupdate-sign -k priv.pem -c pub.pem -i sw-description -o $SWU_NAME update-rootfs.tar.gz
+
+echo "✅ SWU package built and signed: $SWU_NAME"
